@@ -1,4 +1,3 @@
-print("suca!")
-
-
-print 'suca'
+while True :
+	cmd = raw_input("$> ")
+	print cmd
