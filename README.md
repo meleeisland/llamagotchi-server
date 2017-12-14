@@ -10,5 +10,7 @@
 ## Todo ##
 - Librerie per stampare llama a terminale
 - Applicazione di shell per l'interazione con il llama
--  Definizione della classe llama con le statistiche della creatura
+	- Definire i casi base per upgrade e llamagotchi
+- Definizione della classe llama con le statistiche della creatura
+	- Definire i metodi di base per l'upgrade del llamagotchi
 
