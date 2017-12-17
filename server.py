@@ -3,48 +3,25 @@ import sys
 import json
 import socket
 
+from src.utils import unpack_dict,pack_dict,clean_request,logged_request,get_llama_id,add_to_users
 from src.LlamaClass import Llama
-
-address = "localhost"
-port = int( os.environ['PORT'])
-serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-serversocket.bind((address, port))
-serversocket.listen(5) # become a server socket, maximum 5 connections
 
 
 
 usersdb = [{"user":"pippo","pass":"pippo","llama" : None}]
-users = {}
+	
 
-def unpack_dict(data):
-	data = json.loads(data)
-	type = data[0]
-	values = data[1]
-	user = data[2]
-	return type,values,user
-def pack_dict(t,m,u) :
-	d = [t,m,u]
-	a = json.dumps(d)	
-	return a,len(a)
-
-def get_llama(u):		
-	user_id = users[u-1] - 1
+def get_llama(u):
+	user_id = get_llama_id(u)		
 	userdata = usersdb[user_id]
 	llama = userdata["llama"]
 	return llama
-def edit_llama(u,llama):		
-	user_id = users[u-1] - 1
+def edit_llama(u,llama):	
+	user_id = get_llama_id(u)	
 	userdata = usersdb[user_id]
 	userdata["llama"] = llama
-def clean_request(data):
-	if len(data) == 0 : return False
-	return True
-def logged_request(data):
-	print data
-	type,userdata,userid = unpack_dict(data)
-	if userid - 1 in users.keys() :
-		return True
-	else: return False
+		
+	
 	
 def check_login(data):
 	global usersdb
@@ -65,6 +42,78 @@ def check_login(data):
 	print login
 	return login
 	
+	
+def handle_data(connection,data):
+	t,v,u = unpack_dict(data)
+
+	if t == "logout":
+		print "removing users["+str(u-1)+"]"
+		edit_llama(u,None)
+		remove_from_users(u)
+	elif t == "pet":
+		print "executing pet for users["+str(u-1)+"]"
+		llama = get_llama(u)
+		llama.pet()
+		if (llama != None):
+			data,l = pack_dict("text","baaah!",u)
+			connection.sendall(data)
+	elif t == "ghappy":
+		print "getting happiness for users["+str(u-1)+"]"
+		llama = get_llama(u)
+		if (llama != None):
+			data,l = pack_dict("text",llama.getHappiness(),u)
+			connection.sendall(data)
+	elif t == "gname":
+		print "getting name from users["+str(u-1)+"]"
+		llama = get_llama(u)
+		if (llama != None):
+			data,l = pack_dict("text",llama.getName(),u)
+			connection.sendall(data)
+	elif t == "save":
+		print "saving users["+str(u-1)+"]"
+		llama = get_llama(u)
+		llama.save(savefile_name(u))
+		if (llama != None):
+			data,l = pack_dict("text","saved",u)
+			connection.sendall(data)
+	elif t == "sname":
+		print "setting name for users["+str(u-1)+"] -> " + v
+		llama = get_llama(u)
+		llama.setName(v)
+		if (llama != None):
+			data,l = pack_dict("text",llama.getName(),u)
+			connection.sendall(data)
+		else :
+			data,l = pack_dict("error","",u)
+			connection.sendall(data)
+	elif t == "new":
+		print "new llama for users["+str(u-1)+"] -> " + v
+		edit_llama(u,Llama(""))
+		llama = get_llama(u)
+		if (llama != None):
+			data,l = pack_dict("text",llama.getName(),u)
+			connection.sendall(data)
+		else :
+			data,l = pack_dict("error","",u)
+			connection.sendall(data)
+	else :
+		print >>sys.stderr, 'sending data back to the client'
+		connection.sendall(data)
+		
+	
+	
+	
+	
+	
+	
+	
+	
+address = "localhost"
+port = int( os.environ['PORT'])
+serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+serversocket.bind((address, port))
+serversocket.listen(5) # become a server socket, maximum 5 connections
+
 login = False
 while True:
     # Wait for a connection
@@ -82,50 +131,8 @@ while True:
 						
 					print >>sys.stderr, 'received "%s"' % data
 					
-					if data:
-						t,v,u = unpack_dict(data)
-						
-						if t == "logout":
-							print "removing users["+str(u-1)+"]"
-							edit_llama(u,None)
-							users.pop(u-1, None)
-						elif t == "gname":
-							print "getting name from users["+str(u-1)+"]"
-							llama = get_llama(u)
-							if (llama != None):
-								data,l = pack_dict("text",llama.getName(),u)
-								connection.sendall(data)
-						elif t == "save":
-							print "saving users["+str(u-1)+"]"
-							llama = get_llama(u)
-							llama.save("save-" + str(users[u-1] -1) +".json")
-							if (llama != None):
-								data,l = pack_dict("text","saved",u)
-								connection.sendall(data)
-						elif t == "sname":
-							print "setting name for users["+str(u-1)+"] -> " + v
-							llama = get_llama(u)
-							llama.setName(v)
-							if (llama != None):
-								data,l = pack_dict("text",llama.getName(),u)
-								connection.sendall(data)
-							else :
-								data,l = pack_dict("error","",u)
-								connection.sendall(data)
-						elif t == "new":
-							print "new llama for users["+str(u-1)+"] -> " + v
-							edit_llama(u,Llama(""))
-							llama = get_llama(u)
-							if (llama != None):
-								data,l = pack_dict("text",llama.getName(),u)
-								connection.sendall(data)
-							else :
-								data,l = pack_dict("error","",u)
-								connection.sendall(data)
-						else :
-							print >>sys.stderr, 'sending data back to the client'
-							connection.sendall(data)
-							
+					if data:						
+						handle_data(connection,data)
 						break
 				else:
 					user_id = check_login(data)
@@ -134,8 +141,7 @@ while True:
 						connection.sendall(msg)
 						break
 					else :
-						uid = len(users)
-						users[uid] = user_id 
+						uid = add_to_users(user_id)
 						savefile = "save-" + str(user_id - 1)+".json"
 						llama = usersdb[user_id-1]["llama"]
 						if llama == None:
