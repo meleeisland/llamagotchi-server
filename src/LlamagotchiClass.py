@@ -21,12 +21,12 @@ class Llamagotchi:
 		return llamaString
 	def pet(self):
 		print "petting"
-		self.happiness = self.happiness + 10
+		self.happiness = int(self.happiness) + 10
 		if self.happiness > 100 : self.happiness = 100
 	def getHappiness(self):
 		return str(self.happiness)
 	def tick(self,time):
 		print "llamagotchi ticked"
 		if time % 100 == 0 :
-			self.happiness = self.happiness - 1
+			self.happiness = int(self.happiness) - 1
 	

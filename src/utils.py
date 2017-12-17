@@ -1,5 +1,7 @@
 
 import json
+
+
 def unpack_dict(data):
 	data = json.loads(data)
 	type = data[0]
@@ -37,15 +39,9 @@ def get_llamas_ids():
 	global users
 	return map( lambda x : x +1 ,users.keys())
 	
-
-	
-def clean_request(data):
-	if len(data) == 0 : return False
-	return True
-def logged_request(data):
+def userid_in_users(userid):
 	global users
-	print data
-	type,userdata,userid = unpack_dict(data)
 	if userid - 1 in users.keys() :
 		return True
 	else: return False
+	
