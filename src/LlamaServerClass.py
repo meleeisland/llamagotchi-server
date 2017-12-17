@@ -46,7 +46,7 @@ class LlamaServer :
 		
 		
 		type,userdata,u = unpack_dict(data)
-		if (type != "login") : return False
+		if (type != "login") : return False,errormsg
 		userdata = userdata.split(":")
 		username = userdata[0]
 		password = userdata[1]
@@ -73,6 +73,9 @@ class LlamaServer :
 					m = llama.getName()
 					msg,l=pack_dict("load",m,uid+1)
 				usersdb[user_id-1]["llama"] = llama
+			else : 
+				m = llama.getName()
+				msg,l=pack_dict("load",m,uid+1)
 			return True,msg
 				
 				
@@ -155,7 +158,7 @@ class LlamaServer :
 		
 		
 	def wait_connect(self):
-		print >>sys.stderr, 'waiting for a connection'
+		print >>sys.stderr, 'waiting for a connection on ' + self.address + " " +str(self.port )
 		self.connection, self.client_address = self.socket.accept()
 		print >>sys.stderr, 'connection from', self.client_address
 		

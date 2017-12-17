@@ -1,11 +1,13 @@
 # llamagotchi
 Llamagotchi è un'applicazione server-client dockerizzata basata su python2 in cui puoi gestire la vita di un Lama, dargli da mangiare etc tramite comandi testuali
 
-- per costruire l'immagine:
- `docker build -t meleeisland/llamagotchi`
+- per costruire l'immagine del server:
+ `docker build -t meleeisland/llamagotchi .`
+- per eseguire l'immagine del server:
+ `docker run -e PORT=8080 -p 8080:8080 -h 0.0.0.0 -d --name llamagotchi meleeisland/llamagotchi`
 
-- per eseguire l'immagine:
- `docker run meleeisland/llamagotchi`
+- per eseguire il client:
+ `python2.7 main.py`
 
 ## Messaggi al server ##
 
