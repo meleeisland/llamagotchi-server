@@ -21,5 +21,4 @@ Llamagotchi è un'applicazione server-client dockerizzata basata su python2 in c
 
 ## Todo ##
 - Librerie per stampare llama a terminale
-- Immagini docker per server e client
 
