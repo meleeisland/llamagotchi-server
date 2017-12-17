@@ -114,7 +114,7 @@ while True :
 	elif (cmd == 'pet'):
 		d,l = send(clientsocket,"pet","",uid)
 		print d
-	elif (cmd == 'happiness'):
+	elif (cmd == 'happy'):
 		d,l = send(clientsocket,"ghappy","",uid)
 		print d
 	elif (cmd == 'save'):

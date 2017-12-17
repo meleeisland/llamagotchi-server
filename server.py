@@ -5,7 +5,7 @@ import socket
 import thread
 import time
 
-from src.utils import unpack_dict,pack_dict,clean_request,logged_request,get_llama_id,add_to_users,remove_from_users,get_llamas_ids
+from src.utils import unpack_dict,pack_dict,clean_request,logged_request,get_llama_id,add_to_users,remove_from_users,get_llamas_ids,savefile_name
 from src.LlamaClass import Llama
 
 
@@ -76,7 +76,7 @@ def handle_data(connection,data):
 	elif t == "pet":
 		print "executing pet for users["+str(u-1)+"]"
 		llama = get_llama(u)
-		llama.pet()
+		llama.llamagotchi.pet()
 		if (llama != None):
 			data,l = pack_dict("text","baaah!",u)
 			connection.sendall(data)
@@ -84,7 +84,7 @@ def handle_data(connection,data):
 		print "getting happiness for users["+str(u-1)+"]"
 		llama = get_llama(u)
 		if (llama != None):
-			data,l = pack_dict("text",llama.getHappiness(),u)
+			data,l = pack_dict("text",llama.llamagotchi.getHappiness(),u)
 			connection.sendall(data)
 	elif t == "gname":
 		print "getting name from users["+str(u-1)+"]"
