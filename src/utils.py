@@ -32,9 +32,11 @@ def get_llama_id(u):
 	return user_id
 	
 	
+
+def get_llamas_ids():	
+	global users
+	return map( lambda x : x +1 ,users.keys())
 	
-
-
 
 	
 def clean_request(data):

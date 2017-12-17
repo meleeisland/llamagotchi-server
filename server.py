@@ -2,9 +2,32 @@ import os
 import sys
 import json
 import socket
+import thread
+import time
 
-from src.utils import unpack_dict,pack_dict,clean_request,logged_request,get_llama_id,add_to_users
+from src.utils import unpack_dict,pack_dict,clean_request,logged_request,get_llama_id,add_to_users,remove_from_users,get_llamas_ids
 from src.LlamaClass import Llama
+
+
+
+
+
+def tick( threadName, delay):
+   count = 0
+   while True :
+      time.sleep(delay)
+      print "tick"
+      count += 1
+      llamas_ids = get_llamas_ids()
+      for u in llamas_ids:
+		  llama = get_llama(u)
+		  llama.tick()
+
+try:
+   thread.start_new_thread( tick, ("tick-thread", 1, ) )
+except:
+   print "Error: unable to start thread"
+
 
 
 

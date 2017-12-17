@@ -19,7 +19,7 @@ class Llama:
 		return str(self.happiness)
 	def tick(self):
 		self.time = self.time + 1
-		
+		print self.getName() + " ticked"
 		if self.time % 100 == 0 :
 			self.happiness = self.happiness - 1
 		

@@ -111,6 +111,12 @@ while True :
 	elif (cmd == 'getname'):
 		d,l = send(clientsocket,"gname","",uid)
 		print d
+	elif (cmd == 'pet'):
+		d,l = send(clientsocket,"pet","",uid)
+		print d
+	elif (cmd == 'happiness'):
+		d,l = send(clientsocket,"ghappy","",uid)
+		print d
 	elif (cmd == 'save'):
 		d,l = send(clientsocket,"save","",uid)
 		print d
