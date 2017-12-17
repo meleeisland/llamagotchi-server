@@ -22,6 +22,7 @@ class LlamaClassTest(unittest.TestCase):
 		calogero = Llama('Calogero')
 		calogero.load('testload.json')
 		self.assertEqual(calogero.getName(),'Pippino' )
+		os.unlink('testload.json')
 		
     def testSave(self):
 		calogero = Llama('Calogero')
