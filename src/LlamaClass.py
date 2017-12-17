@@ -20,8 +20,10 @@ class Llama:
 				'name' : self.getName()
 			}
 			json.dump(data, fp)
+			fp.close()
 	def load(self,filename):
 		with open(filename) as json_data:
 			d = json.load(json_data)
 			self.setName(d['name'])
+			json_data.close()
 		
