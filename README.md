@@ -7,7 +7,7 @@ Llamagotchi è un'applicazione server-client dockerizzata basata su python2 in c
  `docker run -e PORT=8080 -p 8080:8080 -h 0.0.0.0 -d --name llamagotchi meleeisland/llamagotchi`
 
 - per eseguire il client:
- `python2.7 main.py`
+ `export PORT=8080 ; python2.7 main.py`
 
 ## Messaggi al server ##
 
