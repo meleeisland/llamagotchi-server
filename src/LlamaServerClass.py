@@ -18,12 +18,12 @@ class S(BaseHTTPRequestHandler):
         self.end_headers()
 	      
     def check_login(self,data):
-		data = json.loads(data)
+		print data
 		ok = False
 		try:
-			if str(data["type"]) == "login" :
-				username = data["username"]
-				password = data["password"]
+			if str(data["type"][0]) == "login" :
+				username = data["username"][0]
+				password = data["password"][0]
 				i = 1
 				user_id = 0
 				for u in usersdb:
@@ -37,13 +37,15 @@ class S(BaseHTTPRequestHandler):
 		return ok	
 		
     def get_logged_user(self,post_data,type=""):
-		data = json.loads(post_data)
+		print post_data
+		data = post_data
 		try:
 			ok = False
 			if type == "" :	ok = True
-			if str(data["type"]) == type :	ok = True
+			if str(data["type"][0]) == type :	ok = True
+			
 			if ok :
-				return int(data["uid"])
+				return int(data["uid"][0])
 		except KeyError:
 			pass
 		return False	
@@ -78,31 +80,6 @@ class S(BaseHTTPRequestHandler):
 			}
 			msg = json.dumps(data)
 			self.wfile.write(msg)
-    def logoutRequest(self,post_data):
-		u = self.get_logged_user(post_data,"logout")
-		ok = False
-		try :
-			if u != False :
-				edit_llama(u,None)
-				remove_from_users(u)
-				print "removing users["+str(u-1)+"]"
-				ok = True
-		except KeyError :
-			pass
-		if ok :
-			data = {
-				"type" : "ok",
-				"data" : "bye"
-			}
-			msg = json.dumps(data)
-			self.wfile.write(msg)
-		else :
-			data = {
-				"type" : "error",
-				"data" : "suca"
-			}
-			msg = json.dumps(data)
-			self.wfile.write(msg)
 			
     def petRequest(self,post_data):
 		u = self.get_logged_user(post_data,"pet")
@@ -111,9 +88,8 @@ class S(BaseHTTPRequestHandler):
 		try :
 			if u != False :
 				llama = get_llama(u)
-				data = json.loads(post_data)
 				if (llama != None):
-					llama.pet()
+					llama.llamagotchi.pet()
 					ok = True
 					data = "baah!"
 		except KeyError :
@@ -133,16 +109,16 @@ class S(BaseHTTPRequestHandler):
 			msg = json.dumps(data)
 			self.wfile.write(msg)
 			
-	def snameRequest(self,post_data):
+    def snameRequest(self,post_data):
 		u = self.get_logged_user(post_data,"sname")
 		ok = False
 		data = ""
 		try :
 			if u != False :
 				llama = get_llama(u)
-				data = json.loads(post_data)
+				data = post_data
 				if (llama != None):
-					llama.setName(data["name"])
+					llama.setName(data["name"][0])
 					ok = True
 					data = llama.getName()
 		except KeyError :
@@ -161,7 +137,7 @@ class S(BaseHTTPRequestHandler):
 			}
 			msg = json.dumps(data)
 			self.wfile.write(msg)			
-	def newRequest(self,post_data):
+    def newRequest(self,post_data):
 		u = self.get_logged_user(post_data,"new")
 		ok = False
 		data = ""
@@ -246,18 +222,40 @@ class S(BaseHTTPRequestHandler):
 			data ={ "type" : "error", "data" : "suca" }
 		msg = json.dumps(data)
 		self.wfile.write(msg)
+    def logoutRequest(self,path) :
+		q =  urlparse.parse_qs(path.query)
+		ok = False
+		data = ""
+		try :
+			u = int( q["uid"][0])
+			print u
+			if u != False :
+				edit_llama(u,None)
+				remove_from_users(u)
+				print "removing users["+str(u-1)+"]"
+				data = "bye!"
+		except KeyError :
+			pass
+		if data != "" :
+			data = { "type" : "ok", "data" : data }
+		else :				
+			data ={ "type" : "error", "data" : "suca" }
+		msg = json.dumps(data)
+		self.wfile.write(msg)
     def do_GET(self):
 
         self._set_headers()
         p = urlparse.urlparse(self.path)
         
-        if p.path == "/happy/" :
+        if p.path == "/ghappy/" :
 			self.happyRequest(p)
 				
         elif p.path == "/gname/" :
 			self.gnameRequest(p)
         elif p.path == "/save/" :
 			self.saveRequest(p)
+        elif p.path == "/logout/" :
+			self.logoutRequest(p)
 				
         else :
 			data = { "type" : "error", "data" : "suca:nopath" }
@@ -271,11 +269,11 @@ class S(BaseHTTPRequestHandler):
     def do_POST(self):
 		content_length=int(self.headers['Content-Length']) 
 		post_data = self.rfile.read(content_length) 
+		post_data = urlparse.parse_qs(post_data)
+		
 		self._set_headers()
         
-		if (self.path == "/logout/") :
-			self.logoutRequest(post_data)
-		elif (self.path == "/login/") :
+		if (self.path == "/login/") :
 			self.loginRequest(post_data)
 		elif (self.path == "/pet/") :
 			self.petRequest(post_data)
@@ -284,7 +282,9 @@ class S(BaseHTTPRequestHandler):
 		elif (self.path == "/new/") :
 			self.newRequest(post_data)
 		else :
-			self.wfile.write("<html><body><h1>POST!</h1></body></html>")
+			data = { "type" : "error", "data" : "suca:nopath" }
+			msg = json.dumps(data)
+			self.wfile.write(msg)
         
 class LlamaServer :		
 	def __init__(self, address = "0.0.0.0",port =8080):
