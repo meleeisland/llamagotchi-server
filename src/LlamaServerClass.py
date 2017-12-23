@@ -14,16 +14,28 @@ from src.LlamaDB import get_llama,edit_llama,usersdb
 class S(BaseHTTPRequestHandler):
     def _set_headers(self):
         self.send_response(200)
-        self.send_header('Content-type', 'text/html')
+        self.send_header('Content-type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
-	      
+	  
+    def do_OPTIONS(self):           
+        self.send_response(200, "ok")       
+        self.send_header('Access-Control-Allow-Origin', '*')                
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header("Access-Control-Allow-Headers", "X-Requested-With")     
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")     
     def check_login(self,data):
 		print data
 		ok = False
 		try:
-			if str(data["type"][0]) == "login" :
-				username = data["username"][0]
-				password = data["password"][0]
+			self.log(str(type(data["type"])))
+			if type(data["type"]) is unicode : t = data["type"]
+			elif type(data["type"]) is list : t = data["type"][0]
+			if t == "login" :
+				if type(data["username"]) is unicode : username = data["username"]
+				elif type(data["username"]) is list : username = data["username"][0]
+				if type(data["password"]) is unicode : password = data["password"]
+				elif type(data["password"]) is list : password = data["password"][0]
 				i = 1
 				user_id = 0
 				for u in usersdb:
@@ -52,6 +64,7 @@ class S(BaseHTTPRequestHandler):
 		
 		
     def loginRequest(self,post_data):
+		self.log(str(post_data))
 		is_ok = self.check_login(post_data)
 		if is_ok != False :
 			user_id = is_ok
@@ -262,19 +275,28 @@ class S(BaseHTTPRequestHandler):
 			msg = json.dumps(data)
 			self.wfile.write(msg)
 			
+    def log(self,msg):
+		BaseHTTPRequestHandler.log_message(self,msg)
 
     def do_HEAD(self):
         self._set_headers()
         
     def do_POST(self):
 		content_length=int(self.headers['Content-Length']) 
+		content_type=(self.headers['Content-Type']) 
 		post_data = self.rfile.read(content_length) 
-		post_data = urlparse.parse_qs(post_data)
+		content_type = content_type.split(";")
+		if "application/json" in content_type :
+			post_data = json.loads(post_data)
+		else : post_data = urlparse.parse_qs(post_data)
 		
 		self._set_headers()
-        
+		
+		
+		
 		if (self.path == "/login/") :
 			self.loginRequest(post_data)
+			
 		elif (self.path == "/pet/") :
 			self.petRequest(post_data)
 		elif (self.path == "/sname/") :
