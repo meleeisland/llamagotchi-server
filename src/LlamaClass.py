@@ -9,15 +9,24 @@ class Llama:
 		self.llamagotchi = Llamagotchi()
 		self.llamaupgrade = Llamaupgrade()
 		self.time = 0
+		self.keepalivemax = 1000
+		self.keepalive = self.keepalivemax
 		
 	def toString(self):
 		llamaString =  "Llama\n"
 		llamaString =  llamaString + "Nome : " + self.getName() +"\n"
 		return llamaString
+	def keepalive(self):
+		self.keepalive = self.keepalivemax
 	def tick(self):
 		self.time = self.time + 1
 		self.llamagotchi.tick(self.time)
 		self.llamaupgrade.tick(self.time)
+		self.keepalive = self.keepalive - 1
+		if self.keepalive == 0 :
+			return False
+		else : 
+			return True
 		
 	def setName(self,name):
 		self.name = name

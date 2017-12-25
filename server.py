@@ -22,7 +22,9 @@ def tick( threadName, delay):
 		  if llama == None :
 			  remove_from_users(u)
 		  else :
-			llama.tick()
+			if llama.tick() == False :
+			  remove_from_users(u)
+				
 
 try:
    thread.start_new_thread( tick, ("tick-thread", 1, ) )

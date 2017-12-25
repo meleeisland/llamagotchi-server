@@ -24,8 +24,15 @@ def remove_from_users(u):
 	users.pop(u-1, None)
 def add_to_users(user_id):
 	global users
-	uid = len(users)
-	users[uid] = user_id 
+	uid = False
+	i = 0
+	for u in users :
+		if u == user_id :
+			uid = i
+		i = i + 1
+	if uid == False :
+		uid = len(users)
+		users[uid] = user_id 
 	return uid
 
 def get_llama_id(u):		

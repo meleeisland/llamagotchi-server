@@ -217,6 +217,26 @@ class S(BaseHTTPRequestHandler):
 			data ={ "type" : "error", "data" : "suca" }
 		msg = json.dumps(data)
 		self.wfile.write(msg)
+    def keepaliveRequest(self,path) :
+		q =  urlparse.parse_qs(path.query)
+		ok = False
+		name = ""
+		try :
+			u = int( q["uid"][0])
+			llama = get_llama(u)
+			print llama
+			if (llama != None):
+				llama.keepalive() 
+				ok = True
+		except KeyError :
+			pass
+		if ok :
+			data = { "type" : "keepalive", "data" : "true" }
+		else :				
+			data = { "type" : "keepalive", "data" : "false" }
+		msg = json.dumps(data)
+		self.wfile.write(msg)
+		
     def saveRequest(self,path) :
 		q =  urlparse.parse_qs(path.query)
 		ok = False
@@ -265,6 +285,8 @@ class S(BaseHTTPRequestHandler):
 				
         elif p.path == "/gname/" :
 			self.gnameRequest(p)
+		elif (self.path == "/keepalive/") :
+			self.keepaliveRequest(p)	
         elif p.path == "/save/" :
 			self.saveRequest(p)
         elif p.path == "/logout/" :
@@ -295,8 +317,7 @@ class S(BaseHTTPRequestHandler):
 		
 		
 		if (self.path == "/login/") :
-			self.loginRequest(post_data)
-			
+			self.loginRequest(post_data)		
 		elif (self.path == "/pet/") :
 			self.petRequest(post_data)
 		elif (self.path == "/sname/") :
