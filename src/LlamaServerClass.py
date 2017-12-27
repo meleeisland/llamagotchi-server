@@ -220,18 +220,17 @@ class S(BaseHTTPRequestHandler):
     def keepaliveRequest(self,path) :
 		q =  urlparse.parse_qs(path.query)
 		ok = False
-		name = ""
 		try :
 			u = int( q["uid"][0])
 			llama = get_llama(u)
 			print llama
 			if (llama != None):
-				llama.keepalive() 
+				val = llama.keepAlive() 
 				ok = True
 		except KeyError :
 			pass
 		if ok :
-			data = { "type" : "keepalive", "data" : "true" }
+			data = { "type" : "keepalive", "data" : val }
 		else :				
 			data = { "type" : "keepalive", "data" : "false" }
 		msg = json.dumps(data)
@@ -279,13 +278,12 @@ class S(BaseHTTPRequestHandler):
 
         self._set_headers()
         p = urlparse.urlparse(self.path)
-        
+        self.log(p.path)
         if p.path == "/ghappy/" :
 			self.happyRequest(p)
-				
         elif p.path == "/gname/" :
 			self.gnameRequest(p)
-		elif (self.path == "/keepalive/") :
+        elif (p.path == "/keepalive/") :
 			self.keepaliveRequest(p)	
         elif p.path == "/save/" :
 			self.saveRequest(p)

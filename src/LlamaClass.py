@@ -16,8 +16,9 @@ class Llama:
 		llamaString =  "Llama\n"
 		llamaString =  llamaString + "Nome : " + self.getName() +"\n"
 		return llamaString
-	def keepalive(self):
+	def keepAlive(self):
 		self.keepalive = self.keepalivemax
+		return self.keepalive
 	def tick(self):
 		self.time = self.time + 1
 		self.llamagotchi.tick(self.time)

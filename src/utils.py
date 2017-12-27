@@ -24,13 +24,13 @@ def remove_from_users(u):
 	users.pop(u-1, None)
 def add_to_users(user_id):
 	global users
-	uid = False
+	uid = None
 	i = 0
-	for u in users :
+	for k,u in users.iteritems() :
 		if u == user_id :
 			uid = i
 		i = i + 1
-	if uid == False :
+	if uid == None :
 		uid = len(users)
 		users[uid] = user_id 
 	return uid
