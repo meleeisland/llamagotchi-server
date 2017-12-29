@@ -47,17 +47,25 @@ class S(BaseHTTPRequestHandler):
 		except KeyError:
 			pass
 		return ok	
-		
+	
+    def extract_json(self,val) :
+		self.log(str(type(val)))
+		if type(val) is list : return val[0]
+		if type(val) in [unicode,int] : return val
+		return None
     def get_logged_user(self,post_data,type=""):
-		print post_data
 		data = post_data
+		self.log(str(post_data))
+		self.log(str(type))
 		try:
 			ok = False
 			if type == "" :	ok = True
-			if str(data["type"][0]) == type :	ok = True
+			t = self.extract_json(data["type"])
+			if str(t) == type :	ok = True
 			
-			if ok :
-				return int(data["uid"][0])
+			uid =  self.extract_json(data["uid"])
+			if ok and (uid != None ):
+				return int(uid)
 		except KeyError:
 			pass
 		return False	
