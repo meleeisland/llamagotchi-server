@@ -270,6 +270,8 @@ class S(BaseHTTPRequestHandler):
 			u = int( q["uid"][0])
 			print u
 			if u != False :
+				llama = get_llama(u)
+				llama.save()
 				edit_llama(u,None)
 				remove_from_users(u)
 				print "removing users["+str(u-1)+"]"

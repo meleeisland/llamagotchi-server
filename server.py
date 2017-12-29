@@ -23,6 +23,7 @@ def tick( threadName, delay):
 			  remove_from_users(u)
 		  else :
 			if llama.tick() == False :
+			  llama.save()
 			  remove_from_users(u)
 				
 
