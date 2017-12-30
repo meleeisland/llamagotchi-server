@@ -9,7 +9,7 @@ class Llama:
 		self.llamagotchi = Llamagotchi()
 		self.llamaupgrade = Llamaupgrade()
 		self.time = 0
-		self.keepalivemax = 1000
+		self.keepalivemax = 20
 		self.keepalive = self.keepalivemax
 		
 	def toString(self):
