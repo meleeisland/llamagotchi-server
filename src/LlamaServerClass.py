@@ -2,341 +2,160 @@ import os
 import sys
 import json
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+
 import SocketServer
 import urlparse
 
 from src.LlamaClass import Llama
+from src.BaseHTTPcustomServer import BaseHTTPcustomServer
 
 from src.utils import unpack_dict,pack_dict,userid_in_users,get_llama_id,add_to_users,remove_from_users,get_llamas_ids,savefile_name
 
-from src.LlamaDB import get_llama,edit_llama,usersdb
+from src.LlamaDB import get_llama,edit_llama,usersdb,get_userid_from_credentials
 
-class S(BaseHTTPRequestHandler):
-    def _set_headers(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-	  
-    def do_OPTIONS(self):           
-        self.send_response(200, "ok")       
-        self.send_header('Access-Control-Allow-Origin', '*')                
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header("Access-Control-Allow-Headers", "X-Requested-With")     
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")     
+class S(BaseHTTPcustomServer):
     def check_login(self,data):
-		print data
 		ok = False
 		try:
-			self.log(str(type(data["type"])))
-			if type(data["type"]) is unicode : t = data["type"]
-			elif type(data["type"]) is list : t = data["type"][0]
+			t = self.extract_json(data["type"])
 			if t == "login" :
-				if type(data["username"]) is unicode : username = data["username"]
-				elif type(data["username"]) is list : username = data["username"][0]
-				if type(data["password"]) is unicode : password = data["password"]
-				elif type(data["password"]) is list : password = data["password"][0]
-				i = 1
-				user_id = 0
-				for u in usersdb:
-					if u["user"] == username and u["pass"] == password:
-						user_id = i
-					i = i+1
-				if user_id != 0 :
-					ok = user_id
+				username = self.extract_json(data["username"])
+				password = self.extract_json(data["password"])
+				ok = get_userid_from_credentials(username,password)
 		except KeyError:
 			pass
 		return ok	
-	
-    def extract_json(self,val) :
-		self.log(str(type(val)))
-		if type(val) is list : return val[0]
-		if type(val) in [unicode,int] : return val
-		return None
-    def get_logged_user(self,post_data,type=""):
-		data = post_data
-		self.log(str(post_data))
-		self.log(str(type))
-		try:
-			ok = False
-			if type == "" :	ok = True
-			t = self.extract_json(data["type"])
-			if str(t) == type :	ok = True
-			
-			uid =  self.extract_json(data["uid"])
-			if ok and (uid != None ):
-				return int(uid)
-		except KeyError:
-			pass
-		return False	
 		
 		
-    def loginRequest(self,post_data):
-		self.log(str(post_data))
-		is_ok = self.check_login(post_data)
-		if is_ok != False :
-			user_id = is_ok
-			loggedUID = add_to_users(user_id)
-			savefile = "save-" + str(user_id - 1)+".json"
-			llama = usersdb[user_id-1]["llama"]
-			if llama == None:
-				llama = Llama("Calogero")	
-				if (  os.path.isfile(savefile) == False ) :
-					llama.save(savefile)
-					data = {"type" : "new","data" : llama.getName() ,"uid" : loggedUID + 1}
-					msg = json.dumps(data)
-				else :
-					llama.load(savefile)
-					data = {"type" : "load","data" : llama.getName(),"uid" : loggedUID + 1}
-					msg = json.dumps(data)
-				usersdb[user_id-1]["llama"] = llama
-			else : 
-				data = {"type" : "load","data" : llama.getName(),"uid" : loggedUID + 1}
-				msg = json.dumps(data)
-			self.wfile.write(msg)
-		else :
-			data = {
-				"type" : "error",
-				"data" : "suca"
-			}
-			msg = json.dumps(data)
-			self.wfile.write(msg)
 			
-    def petRequest(self,post_data):
-		u = self.get_logged_user(post_data,"pet")
-		ok = False
-		data = ""
-		try :
-			if u != False :
-				llama = get_llama(u)
-				if (llama != None):
-					llama.llamagotchi.pet()
-					ok = True
-					data = "baah!"
-		except KeyError :
-			pass
-		if ok :
-			data = {
-				"type" : "ok",
-				"data" : data
-			}
-			msg = json.dumps(data)
-			self.wfile.write(msg)
-		else :
-			data = {
-				"type" : "error",
-				"data" : "suca"
-			}
-			msg = json.dumps(data)
-			self.wfile.write(msg)
-			
-    def snameRequest(self,post_data):
-		u = self.get_logged_user(post_data,"sname")
-		ok = False
-		data = ""
-		try :
-			if u != False :
-				llama = get_llama(u)
-				data = post_data
-				if (llama != None):
-					llama.setName(data["name"][0])
-					ok = True
-					data = llama.getName()
-		except KeyError :
-			pass
-		if ok :
-			data = {
-				"type" : "ok",
-				"data" : data
-			}
-			msg = json.dumps(data)
-			self.wfile.write(msg)
-		else :
-			data = {
-				"type" : "error",
-				"data" : "suca"
-			}
-			msg = json.dumps(data)
-			self.wfile.write(msg)			
-    def newRequest(self,post_data):
-		u = self.get_logged_user(post_data,"new")
-		ok = False
-		data = ""
-		try :
-			if u != False :
-				edit_llama(u,Llama(""))
-				llama = get_llama(u)
-				if (llama != None):
-					ok = True
-					data = "new llama : name <" + llama.getName() + ">"
-		except KeyError :
-			pass
-		if ok :
-			data = {
-				"type" : "ok",
-				"data" : data
-			}
-			msg = json.dumps(data)
-			self.wfile.write(msg)
-		else :
-			data = {
-				"type" : "error",
-				"data" : "suca"
-			}
-			msg = json.dumps(data)
-			self.wfile.write(msg)
-			
-			
-			
-    def happyRequest(self,path) :
-		q =  urlparse.parse_qs(path.query)
-		ok = False
-		happy = -1
-		try :
-			u = int( q["uid"][0])
-			llama = get_llama(u)
-			print llama
-			if (llama != None):
-				happy = llama.llamagotchi.getHappiness() 
-		except KeyError :
-			pass
-		if happy > 0 :
-			data = { "type" : "happiness", "data" : happy }
-		else :				
-			data ={ "type" : "error", "data" : "suca" }
-		msg = json.dumps(data)
-		self.wfile.write(msg)
 		
-    def gnameRequest(self,path) :
-		q =  urlparse.parse_qs(path.query)
-		ok = False
-		name = ""
-		try :
-			u = int( q["uid"][0])
-			llama = get_llama(u)
-			print llama
-			if (llama != None):
-				name = llama.getName() 
-		except KeyError :
-			pass
-		if name != "" :
-			data = { "type" : "name", "data" : name }
-		else :				
-			data ={ "type" : "error", "data" : "suca" }
-		msg = json.dumps(data)
-		self.wfile.write(msg)
-    def keepaliveRequest(self,path) :
-		q =  urlparse.parse_qs(path.query)
-		ok = False
-		try :
-			u = int( q["uid"][0])
-			llama = get_llama(u)
-			print llama
-			if (llama != None):
-				val = llama.keepAlive() 
-				ok = True
-		except KeyError :
-			pass
-		if ok :
-			data = { "type" : "keepalive", "data" : val }
-		else :				
-			data = { "type" : "keepalive", "data" : "false" }
-		msg = json.dumps(data)
-		self.wfile.write(msg)
-		
-    def saveRequest(self,path) :
-		q =  urlparse.parse_qs(path.query)
-		ok = False
-		data = ""
-		try :
-			u = int( q["uid"][0])
-			llama = get_llama(u)
-			llama.save(savefile_name(u))
-			if (llama != None):
-				data = llama.getName() + " saved" 
-		except KeyError :
-			pass
-		if data != "" :
-			data = { "type" : "name", "data" : data }
-		else :				
-			data ={ "type" : "error", "data" : "suca" }
-		msg = json.dumps(data)
-		self.wfile.write(msg)
-    def logoutRequest(self,path) :
-		q =  urlparse.parse_qs(path.query)
-		ok = False
-		data = ""
-		try :
-			u = int( q["uid"][0])
-			print u
-			if u != False :
-				llama = get_llama(u)
-				llama.save()
-				edit_llama(u,None)
-				remove_from_users(u)
-				print "removing users["+str(u-1)+"]"
-				data = "bye!"
-		except KeyError :
-			pass
-		if data != "" :
-			data = { "type" : "ok", "data" : data }
-		else :				
-			data ={ "type" : "error", "data" : "suca" }
-		msg = json.dumps(data)
-		self.wfile.write(msg)
+			
     def do_GET(self):
 
-        self._set_headers()
         p = urlparse.urlparse(self.path)
-        self.log(p.path)
         if p.path == "/ghappy/" :
-			self.happyRequest(p)
+			self.customGET(self.getHappiness)
         elif p.path == "/gname/" :
-			self.gnameRequest(p)
+			self.customGET(self.getName)
         elif (p.path == "/keepalive/") :
-			self.keepaliveRequest(p)	
+			self.customGET(self.getKeepalive)
         elif p.path == "/save/" :
-			self.saveRequest(p)
+			self.customGET(self.getSave)
         elif p.path == "/logout/" :
-			self.logoutRequest(p)
-				
+			self.customGET(self.getLogout)
         else :
-			data = { "type" : "error", "data" : "suca:nopath" }
-			msg = json.dumps(data)
-			self.wfile.write(msg)
+			self.customGET(self.getError)
+	
+    def getError(self):
+		return { "type" : "error", "data" : "suca:nopath" }
+    def getName(self,llama) :
+		name = ""
+		try:
+			if (llama != None):
+				name = llama.getName() 
+		except KeyError:
+			pass
+		if name != "" :
+			return { "type" : "name", "data" : name }
+		return { "type" : "error", "data" : "suca" }
+    def getKeepalive(self,llama) :
+		try :
+			val = llama.keepAlive() 
+			return  { "type" : "keepalive", "data" : val }
+		except KeyError : 
+			return { "type" : "keepalive", "data" : "false" }
 			
-    def log(self,msg):
-		BaseHTTPRequestHandler.log_message(self,msg)
-
-    def do_HEAD(self):
-        self._set_headers()
+    def getHappiness(self,llama) :
+		happy = -1
+		try:
+			if (llama != None):
+				happy = llama.llamagotchi.getHappiness() 
+		except KeyError:
+			pass
+		if happy != -1 :
+			return { "type" : "happiness", "data" : happy }
+		return { "type" : "error", "data" : "suca" }
+    def getSave(self,llama,u) :
+		data = ""
+		llama.save(savefile_name(u))
+		if (llama != None):
+			data = llama.getName() + " saved" 
+		if data != "" :
+			return { "type" : "name", "data" : data }
+		return { "type" : "error", "data" : "suca" }
+    def getLogout(self,llama,u) :
+		data = ""
+		if u != False :
+			llama.save()
+			edit_llama(u,None)
+			remove_from_users(u)
+			return { "type" : "ok", "data" : "bye!" }
+		return { "type" : "error", "data" : "suca" }		
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
         
     def do_POST(self):
-		content_length=int(self.headers['Content-Length']) 
-		content_type=(self.headers['Content-Type']) 
-		post_data = self.rfile.read(content_length) 
-		content_type = content_type.split(";")
-		if "application/json" in content_type :
-			post_data = json.loads(post_data)
-		else : post_data = urlparse.parse_qs(post_data)
-		
-		self._set_headers()
-		
-		
-		
 		if (self.path == "/login/") :
-			self.loginRequest(post_data)		
+			self.customPOST(self.postLogin)	
 		elif (self.path == "/pet/") :
-			self.petRequest(post_data)
+			self.customPOST(self.postPet)
 		elif (self.path == "/sname/") :
-			self.snameRequest(post_data)
+			self.customPOST(self.postSetName)
 		elif (self.path == "/new/") :
-			self.newRequest(post_data)
+			self.customPOST(self.postNew)
 		else :
-			data = { "type" : "error", "data" : "suca:nopath" }
-			msg = json.dumps(data)
-			self.wfile.write(msg)
+			self.customPOST(self.getError)
         
+    def postNew(self,llama,u):
+		edit_llama(u,Llama(""))
+		llama = get_llama(u)
+		if (llama != None):
+			return { "type" : "ok",	"data" :  "new llama : name <" + llama.getName() + ">" }
+		return { "type" : "error", "data" : "suca" }
+		
+    def postSetName(self,llama,data):
+		name = self.extract_json(data["name"])
+		llama.setName(name)
+		if (llama != None):
+			return { "type" : "ok",	"data" :  "new name : name <" + llama.getName() + ">" }
+		return { "type" : "error", "data" : "suca" }
+		
+    def postPet(self,llama,data):
+		llama.llamagotchi.pet()
+		return { "type" : "ok",	"data" :   "baah!" }
+		
+    def postLogin(self,data):
+		login = self.check_login(data)
+		if login != False :
+			sessionID = add_to_users(login)
+			llama = get_llama(login)
+			if llama == None :
+				llama = Llama("Calogero")
+				if (  os.path.isfile(savefile_name(login)) == False ) :
+					t = "new"
+					llama.save(savefile_name(login))
+				else :
+					t = "load" 
+					llama.load(savefile_name(login))
+				edit_llama(login,llama)
+				return {"type" : t ,"data" : llama.getName() ,"uid" : sessionID + 1}
+				
+			return {"type" : "load" ,"data" : llama.getName() ,"uid" : sessionID + 1}
+		return { "type" : "error", "data" : "suca" }
 class LlamaServer :		
 	def __init__(self, address = "0.0.0.0",port =8080):
 		self.address = address
