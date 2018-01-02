@@ -16,3 +16,14 @@ def edit_llama(u,llama):
 	userdata["llama"] = llama
 		
 	
+
+def get_userid_from_credentials(username,password):
+	i = 1
+	user_id = 0
+	for u in usersdb:
+		if u["user"] == username and u["pass"] == password:
+			user_id = i
+		i = i+1
+	if user_id != 0 :
+		return user_id
+	return False
