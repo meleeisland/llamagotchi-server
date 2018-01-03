@@ -7,9 +7,10 @@ from pymongo import MongoClient
 def user_has_savefile(user):
     """Return bool if savefile exist for user array"""
     return not user["llamaSave"] is None
+
+
 class LlamaDb(object):
     """Class for database query with mongo."""
-
 
     def __init__(self, name):
         self.client = MongoClient('mongo', 27017)
@@ -120,7 +121,6 @@ class LlamaDb(object):
         user = self.get_logged_user(session_id)
         user["llama"] = llama
         return self.set_logged_user(session_id, user)
-
 
     def get_llama(self, user_id):
         """ Get current llama from user with user_id """
