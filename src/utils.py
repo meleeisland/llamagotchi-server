@@ -1,6 +1,4 @@
-
 import json
-
 
 def unpack_dict(data):
 	data = json.loads(data)
