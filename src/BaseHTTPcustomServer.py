@@ -1,10 +1,8 @@
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from BaseHTTPServer import BaseHTTPRequestHandler
 from inspect import getargspec
 import urlparse
 
 import json
-
-from src.LlamaDB import get_llama,LlamaDB
 
 from src.LlamaClass import Llama
 
@@ -12,6 +10,9 @@ from src.LlamaClass import Llama
 
 class BaseHTTPcustomServer(BaseHTTPRequestHandler):
 	
+	def initCustomServer(self,init_args) :
+		self.stored_post_data = {}
+		self.db = init_args["database"]
 	def _set_headers(self):
 		self.send_response(200)
 		self.send_header('Content-type', 'application/json')
@@ -29,8 +30,12 @@ class BaseHTTPcustomServer(BaseHTTPRequestHandler):
 	def extract_json(self,val) :
 		if type(val) is list : return val[0]
 		if type(val) in [unicode,int] : return val
-		return NoneUpgrade
+		return None
 	
+	def log(self,msg):
+		BaseHTTPRequestHandler.log_message(self,msg)
+
+				
 	def get_llama(self,user_id):
 		llama = self.db.get_llama(user_id)
 		if llama == False :
@@ -51,9 +56,7 @@ class BaseHTTPcustomServer(BaseHTTPRequestHandler):
 	def set_llama(self,user_id,llama):
 		return self.db.set_llama(user_id,llama)
 
-	def log(self,msg):
-		BaseHTTPRequestHandler.log_message(self,msg)
-
+			
 	def authQuery(self) :
 		try : 
 			p = urlparse.urlparse(self.path)
@@ -84,7 +87,7 @@ class BaseHTTPcustomServer(BaseHTTPRequestHandler):
 		except KeyError:
 			pass
 		return False	
-	def executeCustomFun(self,fun,llama,u) :
+	def executeCustomFun(self,fun,llama,u,s) :
 		data = {}
 		sig = getargspec(fun)
 		ps = sig.args
@@ -97,12 +100,14 @@ class BaseHTTPcustomServer(BaseHTTPRequestHandler):
 				data = fun()
 			elif (len(parameters) == 1 ) :
 				data = fun(llama)
-			elif (len(sig.parameters) == 2 ) :
+			elif (len(parameters) == 2 ) :
 				data = fun(llama,u)
+			elif (len(parameters) == 4 ) :
+				data = fun(llama,u,s)
 			return data
 		except TypeError:
 			return { "type" : "error", "data" : "suca" }
-	def executeCustomFunWithData(self,fun,llama,u,post_data) :
+	def executeCustomFunWithData(self,fun,llama,u,s,post_data) :
 		data = {}
 		sig = getargspec(fun)
 		ps = sig.args
@@ -114,8 +119,10 @@ class BaseHTTPcustomServer(BaseHTTPRequestHandler):
 			data = fun(post_data)
 		elif (len(parameters) == 2 ) :
 			data = fun(llama,post_data)
-		elif (len(sig.parameters) == 3 ) :
+		elif (len(parameters) == 3 ) :
 			data = fun(llama,u,post_data)
+		elif (len(parameters) == 4 ) :
+			data = fun(llama,u,s,post_data)
 		return data
 	def customGET(self,fun) :
 		try :
@@ -126,7 +133,7 @@ class BaseHTTPcustomServer(BaseHTTPRequestHandler):
 		except KeyError :
 			u = - 1
 			llama = None
-		data = self.executeCustomFun(fun,llama,u)
+		data = self.executeCustomFun(fun,llama,u,sessionID)
 		msg = json.dumps(data)
 		self.wfile.write(msg)
 		
@@ -140,7 +147,7 @@ class BaseHTTPcustomServer(BaseHTTPRequestHandler):
 		except KeyError :
 			u = - 1
 			llama = None
-		data = self.executeCustomFunWithData(fun,llama,u,self.getStoredPostData())
+		data = self.executeCustomFunWithData(fun,llama,u,sessionID,self.getStoredPostData())
 		msg = json.dumps(data)
 		self.wfile.write(msg)
 		

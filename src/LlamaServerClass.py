@@ -1,26 +1,18 @@
-import os
-import sys
-import json
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from BaseHTTPServer import HTTPServer
 
-import SocketServer
 import urlparse
 
 from src.LlamaClass import Llama
 from src.BaseHTTPcustomServer import BaseHTTPcustomServer
 
-from src.utils import unpack_dict,pack_dict,userid_in_users,get_llama_id,add_to_users,remove_from_users,get_llamas_ids,savefile_name
 
-from src.LlamaDB import get_llama,edit_llama,get_userid_from_credentials
+from src.llama_db import LlamaDb
 
 def MakeLlamaServerFromArgs(init_args):
 	class LlamaCustomHTTP(BaseHTTPcustomServer,object):
 		def __init__(self, *args, **kwargs):
 			 self.initCustomServer(init_args)
 			 super(LlamaCustomHTTP, self).__init__(*args, **kwargs)
-		def initCustomServer(self,init_args) :
-			self.stored_post_data = {}
-			self.db = init_args["database"]
 		def check_login(self,data):
 			ok = False
 			try:
@@ -32,8 +24,6 @@ def MakeLlamaServerFromArgs(init_args):
 			except KeyError:
 				pass
 			return ok	
-			
-			
 				
 			
 				
@@ -69,33 +59,33 @@ def MakeLlamaServerFromArgs(init_args):
 			try :
 				val = llama.keepAlive() 
 				return  { "type" : "keepalive", "data" : val }
-			except KeyError : 
+			except (KeyError , AttributeError) as error :
 				return { "type" : "keepalive", "data" : "false" }
 				
 		def getHappiness(self,llama) :
 			happy = -1
 			try:
-				if (llama != None):
+				if (llama != False):
 					happy = llama.llamagotchi.getHappiness() 
-			except KeyError:
+			except (KeyError , AttributeError) as error :
 				pass
 			if happy != -1 :
 				return { "type" : "happiness", "data" : happy }
 			return { "type" : "error", "data" : "suca" }
 		def getSave(self,llama,u) :
 			data = ""
-			llama.save(savefile_name(u))
-			if (llama != None):
+			llama.save(u)
+			if (llama != False):
 				data = llama.getName() + " saved" 
 			if data != "" :
 				return { "type" : "name", "data" : data }
 			return { "type" : "error", "data" : "suca" }
-		def getLogout(self,llama,u) :
+		def getLogout(self,llama,u,s) :
 			data = ""
 			if u != False :
 				llama.save()
-				edit_llama(u,None)
-				remove_from_users(u)
+				self.db.set_llama(u,None)
+				self.db.logout_user(s)
 				return { "type" : "ok", "data" : "bye!" }
 			return { "type" : "error", "data" : "suca" }		
 		   
@@ -159,7 +149,7 @@ class LlamaServer :
 	def __init__(self, address = "0.0.0.0",port =8080 , mongodb = None ):
 		self.address = address
 		self.port = port
-		if mongodb == None : mongodb = LlamaDB("test")
+		if mongodb == None : mongodb = LlamaDb("test")
 		S = MakeLlamaServerFromArgs({"database" : mongodb })
 		self.httpd = HTTPServer((self.address,self.port), S )		
 	def start(self) :

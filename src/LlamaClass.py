@@ -1,17 +1,21 @@
-import json
+import os
 from LlamagotchiClass import Llamagotchi
 from LlamaupgradeClass import Llamaupgrade
-from LlamaDB import LlamaDB
+from llama_db import LlamaDb
 
 class Llama:
 	
 	def __init__(self, name ,dbname = "test"):
-		self.db = LlamaDB(dbname)
+		self.db = LlamaDb(dbname)
 		self.setName(name)
 		self.llamagotchi = Llamagotchi()
 		self.llamaupgrade = Llamaupgrade()
 		self.time = 0
 		self.keepalivemax = 20
+		try : 
+			self.keepalivemax = int(os.environ["KEEPALIVEMAX"])
+		except KeyError :
+			pass
 		self.keepalive = self.keepalivemax
 		
 	def toString(self):
@@ -43,11 +47,11 @@ class Llama:
 	def getName(self):
 		return self.name
 	def save(self,user_id):
-		self.db.saveLlama(self,user_id)
+		self.db.save_llama(self,user_id)
 		
 	def load(self,user_id):
 		toUpdate = False
-		d = self.db.loadLlama(user_id)
+		d = self.db.load_llama(user_id)
 		try : self.setName(d['name'])
 		except KeyError : toUpdate = True
 		try :

@@ -2,13 +2,10 @@ import os
 import thread
 import time
 
-from src.utils import get_llamas_ids,get_llama_id,remove_from_users,savefile_name
 from src.LlamaServerClass import LlamaServer
-from src.LlamaDB import get_llama,edit_llama,LlamaDB
+from src.llama_db import LlamaDb
 
-
-
-db = LlamaDB("test")
+db = LlamaDb("test")
 
 
 def tick( threadName, delay , max):
