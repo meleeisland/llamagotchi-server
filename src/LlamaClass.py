@@ -1,10 +1,12 @@
 import json
 from LlamagotchiClass import Llamagotchi
 from LlamaupgradeClass import Llamaupgrade
+from LlamaDB import LlamaDB
 
 class Llama:
 	
-	def __init__(self, name):
+	def __init__(self, name ,dbname = "test"):
+		self.db = LlamaDB(dbname)
 		self.setName(name)
 		self.llamagotchi = Llamagotchi()
 		self.llamaupgrade = Llamaupgrade()
@@ -16,6 +18,13 @@ class Llama:
 		llamaString =  "Llama\n"
 		llamaString =  llamaString + "Nome : " + self.getName() +"\n"
 		return llamaString
+	def toJSON(self):
+		data = {
+			'name' : self.getName()
+		}
+		data["llamagotchi"] = self.llamagotchi.toJSON()
+		data["llamaupgrade"] = self.llamaupgrade.toJSON()
+		return data
 	def keepAlive(self):
 		self.keepalive = self.keepalivemax
 		return self.keepalive
@@ -33,31 +42,22 @@ class Llama:
 		self.name = name
 	def getName(self):
 		return self.name
-	def save(self,filename):
-		with open(filename, 'w') as fp:
-			data = {
-				'name' : self.getName()
-			}
-			data["llamagotchi"] = self.llamagotchi.toJSON()
-			data["llamaupgrade"] = self.llamaupgrade.toJSON()
-			json.dump(data, fp)
-			fp.close()
-	def load(self,filename):
+	def save(self,user_id):
+		self.db.saveLlama(self,user_id)
+		
+	def load(self,user_id):
 		toUpdate = False
-		with open(filename) as json_data:
-			d = json.load(json_data)
-			
-			try : self.setName(d['name'])
-			except KeyError : toUpdate = True
-			try :
-				l = d["llamagotchi"]
-				self.llamagotchi.loadJSON(l)
-			except KeyError : toUpdate = True
-			try :
-				l = d["llamaupgrade"]
-				self.llamaupgrade.loadJSON(l)
-			except KeyError : toUpdate = True
-			if toUpdate :
-				self.save(filename)
-			json_data.close()
+		d = self.db.loadLlama(user_id)
+		try : self.setName(d['name'])
+		except KeyError : toUpdate = True
+		try :
+			l = d["llamagotchi"]
+			self.llamagotchi.loadJSON(l)
+		except KeyError : toUpdate = True
+		try :
+			l = d["llamaupgrade"]
+			self.llamaupgrade.loadJSON(l)
+		except KeyError : toUpdate = True
+		if toUpdate :
+			self.save(user_id)
 		

@@ -4,30 +4,31 @@ import time
 
 from src.utils import get_llamas_ids,get_llama_id,remove_from_users,savefile_name
 from src.LlamaServerClass import LlamaServer
-from src.LlamaDB import get_llama,edit_llama
+from src.LlamaDB import get_llama,edit_llama,LlamaDB
 
 
 
+db = LlamaDB("test")
 
 
 def tick( threadName, delay , max):
-   count = 0
-   while True :
-      time.sleep(delay)
-      print "tick"
-      count += 1
-      llamas_ids = get_llamas_ids()
-      print str(llamas_ids)
-      for u in llamas_ids:
-		  llama = get_llama(u)
-		  if llama == None :
-			  remove_from_users(u)
-		  else :
+	global db
+	count = 0
+	while True :
+		time.sleep(delay)
+		print "tick"
+		count += 1
+		llama_ids = db.get_logged_llama_session_ids()
+		for sessionID in llama_ids :
+			print sessionID
+			u = db.get_logged_user_id(sessionID)
+			print u
+			llama = db.get_llama(u)
 			for i in range(0,max) :
 				if llama.tick() == False :
-				  llama.save(savefile_name(u))
-				  remove_from_users(u)
-				
+					llama.save(u)
+					db.logout_user(sessionID)
+
 
 try:
    delay = 1
@@ -50,7 +51,6 @@ except:
 	
 	
 
-
-server = LlamaServer('0.0.0.0', int(os.environ["PORT"]))
+server = LlamaServer('0.0.0.0', int(os.environ["PORT"]),db)
 
 server.start()
