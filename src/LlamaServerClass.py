@@ -3,7 +3,7 @@ from BaseHTTPServer import HTTPServer
 import urlparse
 
 from src.LlamaClass import Llama
-from src.BaseHTTPcustomServer import BaseHTTPcustomServer
+from src.base_http_customserver import BaseHTTPcustomServer,extract_json
 
 
 from src.llama_db import LlamaDb
@@ -12,18 +12,16 @@ from src.llama_db import LlamaDb
 def MakeLlamaServerFromArgs(init_args):
     class LlamaCustomHTTP(BaseHTTPcustomServer, object):
         def __init__(self, *args, **kwargs):
-            self.initCustomServer(init_args)
+            self.init_custom_server(init_args)
             super(LlamaCustomHTTP, self).__init__(*args, **kwargs)
 
         def check_login(self, data):
             ok = False
             try:
-                t = self.extract_json(data["type"])
-                if t == "login":
-                    username = self.extract_json(data["username"])
-                    password = self.extract_json(data["password"])
-                    ok = self.db.get_user_id_from_credentials(
-                        username, password)
+                if data["type"] == "login":
+                    username = data["username"]
+                    password = data["password"]
+                    ok = self._db.get_user_id_from_credentials(username, password)
             except KeyError:
                 pass
             return ok
@@ -32,17 +30,17 @@ def MakeLlamaServerFromArgs(init_args):
 
             p = urlparse.urlparse(self.path)
             if p.path == "/ghappy/":
-                self.customGET(self.getHappiness)
+                self.custom_get(self.getHappiness)
             elif p.path == "/gname/":
-                self.customGET(self.getName)
+                self.custom_get(self.getName)
             elif (p.path == "/keepalive/"):
-                self.customGET(self.getKeepalive)
+                self.custom_get(self.getKeepalive)
             elif p.path == "/save/":
-                self.customGET(self.getSave)
+                self.custom_get(self.getSave)
             elif p.path == "/logout/":
-                self.customGET(self.getLogout)
+                self.custom_get(self.getLogout)
             else:
-                self.customGET(self.getError)
+                self.custom_get(self.getError)
 
         def getError(self):
             return {"type": "error", "data": "suca:nopath"}
@@ -97,15 +95,15 @@ def MakeLlamaServerFromArgs(init_args):
         def do_POST(self):
 
             if (self.path == "/login/"):
-                self.customPOST(self.postLogin)
+                self.custom_post(self.postLogin)
             elif (self.path == "/pet/"):
-                self.customPOST(self.postPet)
+                self.custom_post(self.postPet)
             elif (self.path == "/sname/"):
-                self.customPOST(self.postSetName)
+                self.custom_post(self.postSetName)
             elif (self.path == "/new/"):
-                self.customPOST(self.postNew)
+                self.custom_post(self.postNew)
             else:
-                self.customPOST(self.getError)
+                self.custom_post(self.getError)
 
         def postNew(self, llama, u):
             self.set_llama(u, Llama(""))
@@ -115,7 +113,7 @@ def MakeLlamaServerFromArgs(init_args):
             return {"type": "error", "data": "suca"}
 
         def postSetName(self, llama, data):
-            name = self.extract_json(data["name"])
+            name = extract_json(data["name"])
             llama.setName(name)
             if (llama != None):
                 return {"type": "ok",	"data":  "new name : name <" + llama.getName() + ">"}
@@ -127,8 +125,9 @@ def MakeLlamaServerFromArgs(init_args):
 
         def postLogin(self, data):
             login = self.check_login(data)
+            self.log(str(login))
             if login != False:
-                sessionID = self.db.login_user(login)
+                sessionID = self._db.login_user(login)
                 llama, t = self.get_llama(login)
                 return {"type": t, "data": llama.getName(), "uid": sessionID}
             return {"type": "error", "data": "suca"}
