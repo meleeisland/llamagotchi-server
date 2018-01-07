@@ -5,7 +5,7 @@ import urlparse
 
 import json
 
-from src.LlamaClass import Llama
+from src.llama_class import get_llama
 
 
 def extract_json(val):
@@ -90,37 +90,11 @@ class BaseHTTPcustomServer(BaseHTTPRequestHandler):
         """Log a message string"""
         BaseHTTPRequestHandler.log_message(self, msg)
 
-    def get_llama(self, user_id):
-        """Get a llama from user_id.
-        If llama is new, create Calogero,
-        if llama is saved load it,
-        if llama is already logged use it.
-        Return llama and type string ("new","load")"""
-        llama = self._db.get_llama(user_id)
-        if llama is False:
-            return False, False
-        if llama == "new":
-            llama = Llama("Calogero")
-            llama.save(user_id)
-            self._db.set_llama(user_id, llama)
-            _t = "new"
-        elif llama == "load":
-            llama = Llama("Calogero")
-            llama.load(user_id)
-            self._db.set_llama(user_id, llama)
-            _t = "load"
-        else:
-            _t = "load"
-        return llama, _t
-
-    def set_llama(self, user_id, llama):
-        """Set a llama for user with user_id"""
-        return self._db.set_llama(user_id, llama)
-
     def auth_post_data(self):
         """Get session_id from postdata"""
         try:
             post_data = self.get_post_data()
+            self.log(str(post_data))
             session_id = post_data["uid"]
             if session_id != None:
                 return session_id
@@ -160,8 +134,9 @@ class BaseHTTPcustomServer(BaseHTTPRequestHandler):
         try:
             self._set_headers()
             session_id = self.auth_query()
+            self.log(session_id)
             user_id = self._db.get_logged_user_id(session_id)
-            llama, _ = self.get_llama(user_id)
+            llama, _ = get_llama(self._db, user_id)
         except KeyError:
             user_id = - 1
             llama = None
@@ -175,7 +150,7 @@ class BaseHTTPcustomServer(BaseHTTPRequestHandler):
             self._set_headers()
             session_id = self.auth_post_data()
             user_id = self._db.get_logged_user_id(session_id)
-            llama, _t = self.get_llama(user_id)
+            llama, _t = get_llama(self._db, user_id)
         except KeyError:
             user_id = - 1
             llama = None

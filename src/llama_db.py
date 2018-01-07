@@ -109,7 +109,7 @@ class LlamaDb(object):
 
     def save_llama(self, llama, user_id):
         """ Set user savedata from llama to user with user_id """
-        data = llama.toJSON()
+        data = llama.to_json()
         user = self.get_user(user_id)
         user["llamaSave"] = data
         self._db.users.update_one(

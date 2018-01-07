@@ -1,7 +1,7 @@
 import os
 import json
 import unittest
-from LlamaClass import Llama
+from llama_class import Llama
 
 
 class LlamaClassTest(unittest.TestCase):
@@ -11,7 +11,7 @@ class LlamaClassTest(unittest.TestCase):
 
     def testSetName(self):
         calogero = Llama('Calogero')
-        calogero.setName('Pippino')
+        calogero.set_name('Pippino')
         self.assertEqual(calogero.getName(), "Pippino")
 
     def testLoad(self):
@@ -22,11 +22,11 @@ class LlamaClassTest(unittest.TestCase):
 
     def testToString(self):
         calogero = Llama('Calogero')
-        self.assertEqual(calogero.toString(), "Llama\nNome : Calogero\n")
+        self.assertEqual(calogero.to_string(), "Llama\nNome : Calogero\n")
         calogero = Llama('Cal\!2ogero')
-        self.assertEqual(calogero.toString(), "Llama\nNome : Cal\!2ogero\n")
+        self.assertEqual(calogero.to_string(), "Llama\nNome : Cal\!2ogero\n")
         calogero = Llama('')
-        self.assertEqual(calogero.toString(), "Llama\nNome : \n")
+        self.assertEqual(calogero.to_string(), "Llama\nNome : \n")
 
 
 if __name__ == '__main__':
