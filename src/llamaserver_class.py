@@ -160,8 +160,10 @@ class LlamaServer(object):
         self.port = port
         if mongodb is None:
             mongodb = LlamaDb("test")
-        self.request_handler = make_llamaserver_from_args({"database": mongodb})
-        self.httpd = HTTPServer((self.address, self.port), self.request_handler)
+        self.request_handler = make_llamaserver_from_args(
+            {"database": mongodb})
+        self.httpd = HTTPServer(
+            (self.address, self.port), self.request_handler)
 
     def start(self):
         """Start server"""

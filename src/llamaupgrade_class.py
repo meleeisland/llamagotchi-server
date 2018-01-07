@@ -33,3 +33,6 @@ class Llamaupgrade(object):
     def tick(self, time):
         """Execute tick for time second"""
         print "llamaupgrade ticked " + str(time)
+        # @TODO
+        if time % 100 == 0:
+            self.gold = self.gold
