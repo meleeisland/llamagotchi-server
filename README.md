@@ -18,13 +18,6 @@ docker run --name mongo --network llamanetwork -v $HOME/mongodb/llamadb/:/data/d
 docker run -e PORT=8080 -e TICKS=1 -e DELAY=1 -p 8080:8080 -h 0.0.0.0 -d --name llamagotchi --network llamanetwork meleeisland/llamagotchi #EXECUTE LLAMASERVER`
 ``` 
   
-Eseguire il client:
-  
-
-```   
-export PORT=8080 
-python2.7 main.py
-``` 
 
 ## Messaggi al server ##
 
@@ -36,6 +29,4 @@ python2.7 main.py
 		d,l = send(clientsocket,"save","",uid) #Save
 		d,l = send(clientsocket,"logout","",uid) #Logout
 
-## Todo ##
-- Librerie per stampare llama a terminale
 
