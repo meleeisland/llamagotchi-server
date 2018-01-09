@@ -134,7 +134,7 @@ class BaseHTTPcustomServer(BaseHTTPRequestHandler):
         try:
             self._set_headers()
             session_id = self.auth_query()
-            self.log(session_id)
+            self.log(str(session_id))
             user_id = self._db.get_logged_user_id(session_id)
             llama, _ = get_llama(self._db, user_id)
         except KeyError:
