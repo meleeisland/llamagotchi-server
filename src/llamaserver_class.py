@@ -31,8 +31,8 @@ def make_llamaserver_from_args(init_args):
                 if data["type"] == "login":
                     username = data["username"]
                     password = data["password"]
-                    user_id = self._db.get_user_id_from_credentials(
-                        username, password)
+                    user_id = str(self._db.get_user_id_from_credentials(username, password))
+                    self.log(user_id)
             except KeyError:
                 pass
             return user_id
@@ -143,6 +143,7 @@ def make_llamaserver_from_args(init_args):
         def post_login(self, data):
             """Check login and return llama if exist, ew error"""
             login = self.check_login(data)
+            self.log("A:"+str(login))
             if login != False:
                 session_id = self._db.login_user(login)
                 llama, _t = get_llama(self._db, login)
