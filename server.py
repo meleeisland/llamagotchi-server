@@ -1,56 +1,47 @@
+"""HTTPserver for communication and TickThread for time"""
 import os
 import thread
 import time
 
-from src.utils import get_llamas_ids,get_llama_id,remove_from_users,savefile_name
-from src.LlamaServerClass import LlamaServer
-from src.LlamaDB import get_llama,edit_llama
+from src.llamaserver_class import LlamaServer
+from src.llama_db import LlamaDb
+from src.llama_class import get_llama
+
+DB = LlamaDb("test")
 
 
+def tick(thread_name, _delay, _max, _db, _server):
+    """TickThread for time"""
+    count = 0
+    while True:
+        time.sleep(_delay)
+        print "[" + thread_name + "]" + "tick"
+        count += 1
+        llama_ids = _db.get_logged_llama_session_ids()
+        for session_id in llama_ids:
+            user_id = _db.get_logged_user_id(session_id)
+            llama, _ = get_llama(_db, user_id)
+            for _ in range(0, _max):
+                if llama.tick() is False:
+                    llama.save(user_id)
+                    _db.logout_user(session_id)
 
 
-
-def tick( threadName, delay , max):
-   count = 0
-   while True :
-      time.sleep(delay)
-      print "tick"
-      count += 1
-      llamas_ids = get_llamas_ids()
-      print str(llamas_ids)
-      for u in llamas_ids:
-		  llama = get_llama(u)
-		  if llama == None :
-			  remove_from_users(u)
-		  else :
-			for i in range(0,max) :
-				if llama.tick() == False :
-				  llama.save(savefile_name(u))
-				  remove_from_users(u)
-				
+SERVER = LlamaServer('0.0.0.0', int(os.environ["PORT"]), DB)
 
 try:
-   delay = 1
-   ticks = 1
-   try :
-	   delay = int(os.environ["DELAY"])
-   except KeyError :
-	   pass
-   try :
-	   ticks = int(os.environ["TICKS"])
-   except KeyError :
-	   pass
-   thread.start_new_thread( tick, ("tick-thread", delay , ticks, ) )
-except:
-   print "Error: unable to start thread"
+    DELAY = 1
+    TICKS = 1
+    try:
+        DELAY = int(os.environ["DELAY"])
+    except KeyError:
+        pass
+    try:
+        TICKS = int(os.environ["TICKS"])
+    except KeyError:
+        pass
+    thread.start_new_thread(tick, ("tick_thread", DELAY, TICKS, DB, SERVER, ))
+except thread.error:
+    print "Error: unable to start thread"
 
-
-
-	
-	
-	
-
-
-server = LlamaServer('0.0.0.0', int(os.environ["PORT"]))
-
-server.start()
+SERVER.start()
