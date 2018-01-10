@@ -76,7 +76,8 @@ class Llama(object):
         self.llamagotchi.tick(self.time)
         self.llamaupgrade.tick(self.time)
         self.keepalive = self.keepalive - 1
-        if self.keepalive == 0:
+        print self.keepalive
+        if int(self.keepalive) < 0:
             return False
         return True
 

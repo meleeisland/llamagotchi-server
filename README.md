@@ -1,6 +1,6 @@
 # llamagotchi
 [![PEP8](https://img.shields.io/badge/code%20style-pep8-orange.svg)](https://www.python.org/dev/peps/pep-0008/)
-![pylint Score](https://mperlet.github.io/pybadge/badges/9.68.svg)
+![pylint Score](https://mperlet.github.io/pybadge/badges/9.69.svg)
 
 Llamagotchi è un'applicazione server-client dockerizzata basata su python2 in cui puoi gestire la vita di un Lama, dargli da mangiare etc tramite comandi testuali
   

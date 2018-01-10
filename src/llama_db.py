@@ -2,6 +2,7 @@
 import random
 import string
 from pymongo import MongoClient
+from bson.objectid import ObjectId
 
 
 def user_has_savefile(user):
@@ -19,13 +20,16 @@ class LlamaDb(object):
         self.logged_users = {}
         collection_names = self._db.collection_names(
             include_system_collections=False)
-        users = self._db.users
-        #~ users.drop()
-        user = self.get_user_from_credentials("pippo", "pippo")
+
         if collection_names == []:
-            user = {"username": "pippo",
-                    "password": "pippo", "llamaSave": None}
-            users.insert_one(user)
+            _ = self.add_user("pippo", "pippo")
+
+    def add_user(self, username, password):
+        """Add an user to mongodb"""
+        users = self._db.users
+        user = {"username": username, "password": password, "llamaSave": None}
+        user_id = users.insert_one(user)
+        return user_id
 
     def get_logged_llama_session_ids(self):
         """Return an array with all session IDs"""
@@ -50,7 +54,7 @@ class LlamaDb(object):
         if user_id is False:
             return False
         for sess_id, user in self.logged_users.iteritems():
-            if user["_id"] == user_id:
+            if str(user["_id"]) == str(user_id):
                 return sess_id
         sess_id = self.new_random_session_string()
         user = self.get_user(user_id)
@@ -82,7 +86,7 @@ class LlamaDb(object):
     def get_user(self, user_id):
         """Get user with user_id"""
         users = self._db.users
-        user = users.find_one({"_id": user_id})
+        user = users.find_one({"_id": ObjectId(user_id)})
         return user
 
     def get_user_id_from_credentials(self, username, password):

@@ -31,8 +31,9 @@ def make_llamaserver_from_args(init_args):
                 if data["type"] == "login":
                     username = data["username"]
                     password = data["password"]
-                    user_id = self._db.get_user_id_from_credentials(
-                        username, password)
+                    user_id = str(
+                        self._db.get_user_id_from_credentials(username, password))
+                    self.log(user_id)
             except KeyError:
                 pass
             return user_id
@@ -98,7 +99,7 @@ def make_llamaserver_from_args(init_args):
 
         def get_logout(self, llama, user_id, session_id):
             """Logout user with session_id"""
-            if user_id != False:
+            if session_id != False:
                 llama.save()
                 set_llama(self._db, user_id, None)
                 self._db.logout_user(session_id)
@@ -110,6 +111,8 @@ def make_llamaserver_from_args(init_args):
 
             if self.path == "/login/":
                 self.custom_post(self.post_login)
+            elif self.path == "/register/":
+                self.custom_post(self.post_register)
             elif self.path == "/pet/":
                 self.custom_post(self.post_pet)
             elif self.path == "/sname/":
@@ -124,7 +127,22 @@ def make_llamaserver_from_args(init_args):
             set_llama(self._db, user_id, Llama(""))
             llama = get_llama(self._db, user_id)
             if llama != None:
-                return {"type": "ok",	"data":  "new llama : name <" + llama.get_name() + ">"}
+                return {"type": "ok", "data":  "new llama : name <" + llama.get_name() + ">"}
+            return {"type": "error", "data": "suca"}
+
+        def post_register(self, data):
+            """Add user to database with data.username, data.password"""
+            try:
+                username = data["username"]
+                password = data["password"]
+                user_id = self._db.get_user_id_from_credentials(
+                    username, password)
+                if user_id is not False:
+                    return {"type": "error", "data":  "already exist"}
+                user = self._db.add_user(username, password)
+                return {"type": "ok", "data":  "new user : <" + str(user.inserted_id) + ">"}
+            except KeyError:
+                pass
             return {"type": "error", "data": "suca"}
 
         def post_set_name(self, llama, data):
@@ -145,6 +163,7 @@ def make_llamaserver_from_args(init_args):
             login = self.check_login(data)
             if login != False:
                 session_id = self._db.login_user(login)
+                self.log("S:" + str(session_id))
                 llama, _t = get_llama(self._db, login)
                 return {"type": _t, "data": llama.get_name(), "uid": session_id}
             return {"type": "error", "data": "suca"}
