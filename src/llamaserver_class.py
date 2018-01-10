@@ -161,6 +161,7 @@ def make_llamaserver_from_args(init_args):
         def post_login(self, data):
             """Check login and return llama if exist, ew error"""
             login = self.check_login(data)
+            self.log("A:"+str(login))
             if login != False:
                 session_id = self._db.login_user(login)
                 self.log("S:" + str(session_id))
