@@ -4,6 +4,7 @@ import string
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 
+
 def user_has_savefile(user):
     """Return bool if savefile exist for user array"""
     return not user["llamaSave"] is None
@@ -21,7 +22,7 @@ class LlamaDb(object):
             include_system_collections=False)
         if collection_names == []:
             _ = self.add_user("pippo", "pippo")
-            
+
     def add_user(self, username, password):
         """Add an user to mongodb"""
         users = self._db.users
