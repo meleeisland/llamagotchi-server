@@ -18,6 +18,7 @@ def tick(thread_name, _delay, _max, _db, _server):
         print "[" + thread_name + "]" + "tick"
         count += 1
         llama_ids = _db.get_logged_llama_session_ids()
+        print str(llama_ids)
         for session_id in llama_ids:
             user_id = _db.get_logged_user_id(session_id)
             llama, _ = get_llama(_db, user_id)

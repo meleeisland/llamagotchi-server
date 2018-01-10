@@ -19,12 +19,9 @@ class LlamaDb(object):
         self.logged_users = {}
         collection_names = self._db.collection_names(
             include_system_collections=False)
-        users = self._db.users
-
-
         if collection_names == []:
-            user_id = self.add_user("pippo", "pippo")
-
+            _ = self.add_user("pippo", "pippo")
+            
     def add_user(self, username, password):
         """Add an user to mongodb"""
         users = self._db.users
@@ -55,7 +52,7 @@ class LlamaDb(object):
         if user_id is False:
             return False
         for sess_id, user in self.logged_users.iteritems():
-            if user["_id"] == user_id:
+            if str(user["_id"]) == str(user_id):
                 return sess_id
         sess_id = self.new_random_session_string()
         user = self.get_user(user_id)
