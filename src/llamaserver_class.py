@@ -1,6 +1,8 @@
 """Module for llamaserver"""
 from BaseHTTPServer import HTTPServer
 
+import thread
+import time
 import urlparse
 
 from src.llama_class import Llama, get_llama, set_llama
@@ -161,7 +163,7 @@ def make_llamaserver_from_args(init_args):
         def post_login(self, data):
             """Check login and return llama if exist, ew error"""
             login = self.check_login(data)
-            self.log("A:"+str(login))
+            self.log("A:" + str(login))
             if login != False:
                 session_id = self._db.login_user(login)
                 self.log("S:" + str(session_id))
@@ -172,20 +174,69 @@ def make_llamaserver_from_args(init_args):
     return LlamaCustomHTTP
 
 
+def default_llamaserver_config():
+    """Return default config dict for llamaserver"""
+    return {
+        "delay": 1,
+        "ticks": 1
+    }
+
+
 class LlamaServer(object):
     """Class for custom httpserver"""
 
-    def __init__(self, address="0.0.0.0", port=8080, mongodb=None):
+    def __init__(self, address="0.0.0.0", port=8080, mongodb=None, config=None):
         self.address = address
         self.port = port
+        if config is None:
+            config = default_llamaserver_config()
+        self.configure(config)
         if mongodb is None:
             mongodb = LlamaDb("test")
+        self._db = mongodb
         self.request_handler = make_llamaserver_from_args(
             {"database": mongodb})
         self.httpd = HTTPServer(
             (self.address, self.port), self.request_handler)
 
+    def configure(self, config):
+        """Apply config dict"""
+        self.delay = config["delay"]
+        self.ticks = config["ticks"]
+
+    def tick(self, thread_name, _delay, _max):
+        """TickThread for time"""
+        count = 0
+        while True:
+            time.sleep(_delay)
+            llama_ids = self._db.get_logged_llama_session_ids()
+            llamas = {}
+            id_to_remove = []
+            for session_id in llama_ids:
+                user_id = self._db.get_logged_user_id(session_id)
+                llama, _ = get_llama(self._db, user_id)
+                llamas[session_id] = llama
+            for _ in range(0, _max):
+                print "[" + thread_name + "]" + "tick"
+                count += 1
+                for session_id in id_to_remove:
+                    llamas.pop(session_id, None)
+                for session_id, llama in llamas.iteritems():
+                    if llama.tick() is False:
+                        llama.save(user_id)
+                        self._db.logout_user(session_id)
+                        id_to_remove.append(session_id)
+
+    def start_tick_thread(self):
+        """Start ticking with current configuration"""
+        try:
+            thread.start_new_thread(
+                self.tick, ("tick_thread", self.delay, self.ticks))
+        except thread.error:
+            print "Error: unable to start thread"
+
     def start(self):
         """Start server"""
         print 'Starting httpd...'
+        self.start_tick_thread()
         self.httpd.serve_forever()
