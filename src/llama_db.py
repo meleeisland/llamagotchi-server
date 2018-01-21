@@ -93,7 +93,7 @@ class LlamaDb(object):
     def get_user_id_from_credentials(self, username, password):
         """Get user_id with username : password """
         user = self.get_user_from_credentials(username, password)
-        if user is False:
+        if user is None:
             return False
         return user["_id"]
 
